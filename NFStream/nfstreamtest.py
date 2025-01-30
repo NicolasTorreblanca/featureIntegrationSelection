@@ -7,7 +7,7 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))  
 
     # 📁 Construir la ruta del archivo PCAP
-    pcap_file = os.path.join(script_dir, "PCAP", "MITM_normal4.pcap")  # Cambia "archivo.pcap" por el nombre real
+    pcap_file = os.path.join(script_dir, "PCAP", "MITM_normal4.pcap") 
 
     # 🔍 Imprimir la ruta para depuración
     print(f" Buscando archivo en: {pcap_file}")
