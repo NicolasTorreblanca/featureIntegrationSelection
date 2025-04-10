@@ -2,23 +2,9 @@ import nfstream
 import pandas as pd
 import os
 
-# Mapeo de clases a números
-label_map = {
-    "Normal": 0,
-    "MITM": 1,
-    "NormalDdos": 2,
-    "NormalDos": 3,
-    "NormalScanning": 4,
-    "NormalXss": 5,
-    "NormalRunsomware": 6,
-    "InjectionNormal": 7,
-    "PasswordNormal": 8,
-    "NormalBackdoor": 9
-}
-
-def process_pcap(file_path, label_id):
-    """Procesa un archivo PCAP con NFStreamer y añade una etiqueta numérica."""
-    print(f"Procesando {file_path} como clase {label_id}...")
+def process_pcap(file_path, label):
+    """Procesa un archivo PCAP con NFStreamer y añade una etiqueta."""
+    print(f"Procesando {file_path} como {label}...")
 
     stream = nfstream.NFStreamer(
         source=file_path,
@@ -29,12 +15,13 @@ def process_pcap(file_path, label_id):
 
     flows = []
     for flow in stream:
+        # Lógica tipo Zeek para conn-state
         if flow.src2dst_packets > 0 and flow.dst2src_packets == 0:
-            conn_state = 0
+            conn_state = "S0"
         elif flow.src2dst_packets > 0 and flow.dst2src_packets > 0:
-            conn_state = 1
+            conn_state = "S1"
         else:
-            conn_state = 2
+            conn_state = "OTH"
 
         flows.append({
             "dst-port": flow.dst_port,
@@ -43,7 +30,7 @@ def process_pcap(file_path, label_id):
             "proto": flow.protocol,
             "src-ip-bytes": flow.src2dst_bytes,
             "dst-ip-bytes": flow.dst2src_bytes,
-            "class": label_id
+            "label": label
         })
 
     return flows
@@ -57,23 +44,21 @@ if __name__ == '__main__':
 
     all_flows = []
 
+    # Recorrer todo el árbol de carpetas
     for root, dirs, files in os.walk(pcap_folder):
         for pcap_file in files:
             if pcap_file.endswith(".pcap"):
                 file_path = os.path.join(root, pcap_file)
+                
+                # Extraer la carpeta que representa la clase (última carpeta antes del archivo)
+                label = os.path.basename(os.path.dirname(file_path))
+                
+                # Procesar el archivo con etiqueta
+                all_flows.extend(process_pcap(file_path, label))
 
-                # Extraer nombre de la carpeta de clase
-                folder_name = os.path.basename(os.path.dirname(file_path))
-
-                # Obtener ID de clase (si está definido en el diccionario)
-                if folder_name in label_map:
-                    label_id = label_map[folder_name]
-                    all_flows.extend(process_pcap(file_path, label_id))
-                else:
-                    print(f"[ADVERTENCIA] Carpeta sin etiqueta numérica: {folder_name}")
-
+    # Convertir a DataFrame y guardar
     df = pd.DataFrame(all_flows)
-    output_file = os.path.join(datasets_folder, "TonIoT_6fet.csv")
+    output_file = os.path.join(datasets_folder, "TonIoT_labeled.csv")
     df.to_csv(output_file, index=False)
 
-    print(f"Dataset etiquetado con números guardado en: {output_file}")
+    print(f"Dataset completo guardado en: {output_file}")
