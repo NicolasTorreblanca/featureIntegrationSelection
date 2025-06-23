@@ -1,3 +1,18 @@
+# Primera parte del Script
+# TonIoT-Part1-integrator-PCAP-.py
+# 
+# Se ejecuta sobre los archivos PCAP del 
+# Conjunto de Datos TonIoT.
+# 
+# Una primera parte se transforma estos archivos
+# con las primeras caracteristicas que pueden ser asimiladas.
+# 
+# Entrada: Archivos Pcap de TonIoT(Representantes del trafico de Red)   
+# Salida : Archivos Trafico de red preprocesado en formato CSV con algunas car.
+#
+# Usa la libreria NFStream para el procesamiento de los traficos de Red
+# Tiene que importar la libreria pandas para craer archivos CSV
+
 import nfstream
 import pandas as pd
 import os
@@ -16,6 +31,16 @@ LABEL_MAPPING = {
     'InjectionNormal': 'injection',
     'MITM': 'mitm'
 }
+
+
+# Función para preprocesar los archivos PCAP con parte de las caracteristicas
+# deseadas o ajustar las variables necesarias para generar la segunda parte
+# de caracteristicas deseadas.
+
+# Entrada -> Una ruta de archivo y una etiqueta
+# Busca el archivo, lo lee y transforma el trafico en listas llamadas Flow
+# Salida -> Listas flow, que indican el trafico de red en los archivos PCAP
+
 
 def process_pcap(file_path, label):
     print(f"Procesando {file_path} como {label}...")
@@ -61,6 +86,14 @@ def process_pcap(file_path, label):
             print(f"Error en flujo: {e}")
 
     return flows
+
+# Para leer los archivos PCAP, se plantea de
+# Una manera especifica el bloque Main
+# Se buscaran los directorios de Entrada en el Script
+# Al igual que los directorios de Salida. 
+
+
+
 
 if __name__ == '__main__':
     script_dir = os.path.dirname(os.path.abspath(__file__))
