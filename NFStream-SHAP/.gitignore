@@ -1,0 +1,10 @@
+/DATASETS/
+/Ton-IoT-MultiFet/
+/Ton-IoT-Processed/
+/Ton-IoT-SHAP/
+/TonIOT_Subset.csv
+/TonIoT-formodels-allfets.csv
+/TonIoT-formodels-allfets-binary.csv
+/TonIoT-formodels-allfets-multiclass.csv
+__pycache__/
+*.pyc
