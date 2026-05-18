@@ -102,6 +102,61 @@ def normalize_service(value):
 
 
 # ----------------------------------------------------------------------------
+# Derivadores con fallback (cubren campos que NFStream no siempre populariza)
+# ----------------------------------------------------------------------------
+# NFStream 6.6.0 retorna None para flow.connection_state y flow.requested_service
+# en todos los flujos extraídos de los PCAPs de ToN-IoT. Estos derivadores
+# intentan primero el valor upstream y caen a una síntesis razonable cuando
+# está vacío, manteniendo el comportamiento del NFStream/Part2 original
+# (que sintetizaba conn_state desde packet counts) pero aplicándolo aquí en
+# Part1 para que el resto del pipeline reciba valores correctos desde el
+# primer _base.csv.
+#
+# Limitación conocida: Zeek's "REJ" requiere ver TCP RST en respuesta a SYN,
+# lo cual no puede inferirse solo desde contadores de paquetes. La síntesis
+# solo emite {S0, SF, OTH} — conn_state_REJ permanecerá vacío en el testbed.
+
+def derive_conn_state(flow):
+    """flow.connection_state primero, fallback a síntesis desde packet counts."""
+    upstream = getattr(flow, "connection_state", None)
+    if upstream is not None and upstream != "":
+        return normalize_conn_state(upstream)
+
+    src_pkts = getattr(flow, "src2dst_packets", 0) or 0
+    dst_pkts = getattr(flow, "dst2src_packets", 0) or 0
+    if src_pkts > 0 and dst_pkts == 0:
+        return "S0"
+    elif src_pkts > 0 and dst_pkts > 0:
+        return "SF"
+    else:
+        return "OTH"
+
+
+def derive_service(flow):
+    """flow.requested_service primero, fallback a flow.application_name (nDPI)
+    mapeado al vocabulario Zeek {dns, http, -, Other, None}."""
+    upstream = getattr(flow, "requested_service", None)
+    if upstream is not None and upstream != "":
+        return normalize_service(upstream)
+
+    app = getattr(flow, "application_name", None)
+    if app is None or app == "":
+        return "None"
+
+    app_lower = str(app).lower()
+    if "dns" in app_lower:
+        return "dns"
+    if "http" in app_lower:
+        return "http"
+    if app_lower in ("unknown", "unrated"):
+        return "-"
+    # nDPI puede devolver muchos protocolos (TLS, SSH, FTP, etc.) que no son
+    # parte del vocabulario Zeek que SHAP analizó. No emitimos WARN — son
+    # valores legítimos, simplemente colapsan en "Other".
+    return "Other"
+
+
+# ----------------------------------------------------------------------------
 # Procesamiento de un PCAP individual
 # ----------------------------------------------------------------------------
 def process_pcap(file_path, label):
@@ -132,8 +187,8 @@ def process_pcap(file_path, label):
                 'dns_query':    getattr(flow, "dns_query", "") or "",
                 'dns_rejected': dns_bool_to_zeek_str(getattr(flow, "dns_rejected", None)),
                 'dns_RD':       dns_bool_to_zeek_str(getattr(flow, "dns_rd", None)),
-                'conn_state':   normalize_conn_state(getattr(flow, "connection_state", None)),
-                'service':      normalize_service(getattr(flow, "requested_service", None)),
+                'conn_state':   derive_conn_state(flow),
+                'service':      derive_service(flow),
                 'http_status_code': getattr(flow, "http_response_status_code", -1),
 
                 # Métricas crudas (renombradas a estilo Zeek)
