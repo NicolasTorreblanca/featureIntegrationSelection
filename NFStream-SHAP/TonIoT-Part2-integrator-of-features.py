@@ -22,7 +22,7 @@ from collections import defaultdict
 from pathlib import Path
 
 SELECTED_FEATURES = [
-    'conn_state', 'service', 'http_status_code', 'src_ip_bytes', 'dst_ip_bytes',
+    'conn_state', 'service', 'dns_rejected', 'http_status_code', 'src_ip_bytes', 'dst_ip_bytes',
     'dst_port', 'src_pkts', 'dst_pkts', 'proto',
     'MI_dir_L5_weight', 'HH_L3_weight', 'HH_L0.01_weight',
     'HpHp_L0.01_weight', 'HpHp_L0.01_mean', 'HpHp_L0.01_std', 'HpHp_L0.01_magnitude',
@@ -62,7 +62,7 @@ def enrich_dataset(df):
     required_fields = [
         'src_ip', 'dst_ip', 'src_pkts', 'dst_pkts',
         'src_ip_bytes', 'dst_ip_bytes', 'proto', 'dst_port',
-        'stime', 'conn_state', 'service', 'label',
+        'stime', 'conn_state', 'service', 'dns_rejected', 'label',
     ]
 
     for _, row in df.iterrows():
@@ -91,6 +91,7 @@ def enrich_dataset(df):
             feature_row = {
                 'conn_state':         conn_state,
                 'service':            service,
+                'dns_rejected':       row['dns_rejected'],
                 'http_status_code':   row.get('http_status_code', -1),
                 'src_ip_bytes':       src_bytes,
                 'dst_ip_bytes':       dst_bytes,
