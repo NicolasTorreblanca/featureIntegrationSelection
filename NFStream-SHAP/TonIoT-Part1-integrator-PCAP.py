@@ -159,13 +159,32 @@ def derive_service(flow):
 # ----------------------------------------------------------------------------
 # Procesamiento de un PCAP individual
 # ----------------------------------------------------------------------------
+def _to_ascii_safe_path(p):
+    """Convierte un path a su forma 8.3 (corta, solo ASCII) en Windows
+    cuando contiene caracteres no-ASCII. Workaround para el bug de
+    nfstream multiprocessing que mangla 'Nicolás' a 'Nicols' al pasar el
+    path a los workers. No-op en otras plataformas o si el path ya es ASCII."""
+    if os.name != 'nt':
+        return p
+    try:
+        p.encode('ascii')
+        return p  # already ASCII, no conversion needed
+    except UnicodeEncodeError:
+        pass
+    import ctypes
+    buf = ctypes.create_unicode_buffer(260)
+    rv = ctypes.windll.kernel32.GetShortPathNameW(p, buf, 260)
+    return buf.value if rv else p
+
+
 def process_pcap(file_path, label):
     """Lee un archivo PCAP con NFStreamer y devuelve una lista de filas (dicts)
     con nombres y valores en convención Zeek."""
-    print(f"Procesando {file_path} como {label}...")
+    pcap_path = _to_ascii_safe_path(str(file_path))
+    print(f"Procesando {pcap_path} como {label}...")
 
     stream = nfstream.NFStreamer(
-        source=file_path,
+        source=pcap_path,
         statistical_analysis=True,
         splt_analysis=True,
         n_dissections=20,
