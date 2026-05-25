@@ -18,13 +18,13 @@ TARGET_SIZES = {
     "xss":         20000,
 }
 
-INPUT_FOLDER = "Ton-IoT-Processed"   # was "Ton-IoT-SHAP" — usuario eligió saltar Part3b
+INPUT_FOLDER = "Ton-IoT-SHAP"   # Part3b filtra a la union de los 3 SHAP top-10s
 OUTPUT_FILE  = "TonIOT_Subset.csv"
 
 class_data = {label: [] for label in TARGET_SIZES.keys()}
 
 for file in os.listdir(INPUT_FOLDER):
-    if file.endswith("_processed.csv"):
+    if file.endswith("_shap.csv"):
         path = os.path.join(INPUT_FOLDER, file)
         try:
             df = pd.read_csv(path)

@@ -1,14 +1,17 @@
-# TonIoT-Part3b-SHAPFilter.py
+# TonIoT-Part3b-SHAPFilter.py  (UNION edition)
 #
-# Filtra cada _processed.csv para conservar solo las columnas listadas en
-# output/ToN-IoT/top10_global.csv (producido por shap_analysis_multidataset.py),
-# más la columna 'label' que Part4 necesita para muestrear por clase.
+# Filtra cada _processed.csv para conservar solo las columnas listadas en la
+# UNION de los tres top10_global.csv producidos por shap_analysis_multidataset.py:
+#   - output/ToN-IoT/top10_global.csv
+#   - output/BoT-IoT/top10_global.csv
+#   - output/N-BaIoT/top10_global.csv
+# mas la columna 'label' que Part4 necesita para muestrear por clase.
 #
-# Lee el archivo SHAP en cada corrida — si se re-corre el análisis SHAP y el
-# top-10 cambia, este script automáticamente usa la nueva lista.
+# Lee los tres archivos SHAP en cada corrida. Si alguna columna del union no
+# esta en el _processed.csv de entrada, falla loudly con un diagnostico.
 #
 # Entrada : Ton-IoT-Processed/*_processed.csv  (de Part3)
-#           output/ToN-IoT/top10_global.csv    (del análisis SHAP)
+#           output/{ToN-IoT,BoT-IoT,N-BaIoT}/top10_global.csv  (del SHAP analysis)
 # Salida  : Ton-IoT-SHAP/*_shap.csv
 
 import os
@@ -16,40 +19,64 @@ import pandas as pd
 from pathlib import Path
 
 SCRIPT_DIR    = Path(__file__).resolve().parent
-SHAP_RESULTS  = SCRIPT_DIR.parent.parent / "output" / "ToN-IoT" / "top10_global.csv"
+OUTPUT_ROOT   = SCRIPT_DIR.parent.parent / "output"
+SHAP_DATASETS = ("ToN-IoT", "BoT-IoT", "N-BaIoT")
 INPUT_FOLDER  = SCRIPT_DIR / "Ton-IoT-Processed"
 OUTPUT_FOLDER = SCRIPT_DIR / "Ton-IoT-SHAP"
 
 
-def load_shap_features():
-    if not SHAP_RESULTS.exists():
-        raise FileNotFoundError(
-            f"SHAP results not found at {SHAP_RESULTS}. "
-            "Run shap_analysis_multidataset.py first."
-        )
-    df = pd.read_csv(SHAP_RESULTS, index_col=0)
-    features = df.index.tolist()
-    print(f"SHAP feature list ({len(features)}): {features}")
-    return features
+def load_shap_union():
+    """Lee los 3 top10_global.csv y devuelve la union ordenada de sus columnas
+    (preservando el orden de aparicion: primero ToN-IoT, luego BoT-IoT,
+    luego N-BaIoT). Reporta overlaps si existen."""
+    seen   = set()
+    ordered_union = []
+    per_dataset   = {}
+
+    for name in SHAP_DATASETS:
+        path = OUTPUT_ROOT / name / "top10_global.csv"
+        if not path.exists():
+            raise FileNotFoundError(
+                f"SHAP results not found at {path}. "
+                "Run shap_analysis_multidataset.py first."
+            )
+        df = pd.read_csv(path, index_col=0)
+        feats = df.index.tolist()
+        per_dataset[name] = feats
+        for f in feats:
+            if f not in seen:
+                ordered_union.append(f)
+                seen.add(f)
+
+    print(f"SHAP top-10 per dataset:")
+    for name, feats in per_dataset.items():
+        print(f"  {name:<10s} ({len(feats):2d}): {feats}")
+    overlaps = [f for f in seen
+                if sum(f in feats for feats in per_dataset.values()) > 1]
+    if overlaps:
+        print(f"Cross-dataset overlaps ({len(overlaps)}): {overlaps}")
+    print(f"Union total ({len(ordered_union)}): {ordered_union}")
+    return ordered_union
 
 
-def filter_to_shap(processed_csv: Path, output_csv: Path, features: list):
+def filter_to_union(processed_csv: Path, output_csv: Path, features: list):
     df = pd.read_csv(processed_csv)
     missing = [f for f in features if f not in df.columns]
     if missing:
         raise RuntimeError(
-            f"SHAP-required columns missing from {processed_csv.name}: {missing}. "
-            "Check Part1 vocabulary normalization "
-            "(proto / conn_state / service / dns_rejected values)."
+            f"SHAP-union columns missing from {processed_csv.name}: {missing}. "
+            "Check Part2's SELECTED_FEATURES + Part3's CATEGORICAL_COLS/NUMERIC_COLS "
+            "wiring (every union column must reach _processed.csv either as raw "
+            "numeric or via one-hot expansion of a categorical)."
         )
     keep = features + ['label']
     df[keep].to_csv(output_csv, index=False)
-    print(f"Guardado: {output_csv} ({len(df)} filas, {len(keep)} columnas)")
+    print(f"Guardado: {output_csv.name} ({len(df)} filas, {len(keep)} columnas)")
 
 
 if __name__ == "__main__":
     OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
-    features = load_shap_features()
+    features = load_shap_union()
 
     processed_files = [f for f in os.listdir(INPUT_FOLDER)
                        if f.endswith("_processed.csv")]
@@ -64,6 +91,6 @@ if __name__ == "__main__":
         if out_path.exists():
             print(f"Ya existe: {out_path.name} — omitido.")
             continue
-        filter_to_shap(in_path, out_path, features)
+        filter_to_union(in_path, out_path, features)
 
-    print(f"\nFiltro SHAP completado. Salida en: {OUTPUT_FOLDER}")
+    print(f"\nFiltro SHAP union completado. Salida en: {OUTPUT_FOLDER}")

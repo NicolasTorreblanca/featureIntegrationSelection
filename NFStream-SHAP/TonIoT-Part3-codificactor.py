@@ -18,12 +18,19 @@ from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 CATEGORICAL_COLS = ['proto', 'conn_state', 'service', 'dns_rejected']
 NUMERIC_COLS = [
+    # ToN-IoT raw + NetFlow context
     'http_status_code', 'src_ip_bytes', 'dst_ip_bytes', 'dst_port',
-    'src_pkts', 'dst_pkts',
-    'MI_dir_L5_weight', 'HH_L3_weight', 'HH_L0.01_weight',
-    'HpHp_L0.01_weight', 'HpHp_L0.01_mean', 'HpHp_L0.01_std', 'HpHp_L0.01_magnitude',
-    'N_IN_Conn_P_DstIP', 'N_IN_Conn_P_SrcIP', 'state_number', 'proto_number',
-    'stime', 'max', 'mean', 'min', 'stddev',
+    'src_pkts', 'dst_pkts', 'stime',
+    # BoT-IoT specific
+    'ltime', 'dur', 'TnBPDstIP', 'sum',
+    # Connection counters
+    'N_IN_Conn_P_DstIP', 'N_IN_Conn_P_SrcIP',
+    # Encodings + aggregations
+    'state_number', 'proto_number', 'max', 'mean', 'min', 'stddev',
+    # Kitsune N-BaIoT features
+    'H_L0.01_weight', 'H_L0.1_weight', 'H_L1_weight', 'H_L3_weight', 'H_L0.01_mean',
+    'MI_dir_L0.01_weight', 'MI_dir_L0.1_weight', 'MI_dir_L1_weight', 'MI_dir_L0.1_mean',
+    'HH_jit_L1_mean',
 ]
 LABEL_COL = 'label'
 
