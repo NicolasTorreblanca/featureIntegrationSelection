@@ -201,6 +201,8 @@ def process_pcap(file_path, label):
                 'dst_port': flow.dst_port or 0,
                 'proto':    proto_to_str(flow.protocol),
                 'stime':    getattr(flow, "bidirectional_first_seen_ms", 0.0),
+                'ltime':    getattr(flow, "bidirectional_last_seen_ms", 0.0),
+                'dur':      (getattr(flow, "bidirectional_duration_ms", 0) or 0) / 1000.0,
 
                 # ToN-IoT / Zeek features (convertidas)
                 'dns_query':    getattr(flow, "dns_query", "") or "",
