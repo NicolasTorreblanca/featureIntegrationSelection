@@ -32,13 +32,18 @@ DATASETS = {
         path="TonIoT-ManualFets.csv",
         label_col="category",
         label_map=None,
-        drop_cols=("proto-number",),
+        # 'stime' (absolute start time) is a TEMPORAL LEAK: AUC 1.0 vs label
+        # (benign/attack captured in separate sessions). Dropped. See 'duration'
+        # which is a legit relative feature and is kept.
+        drop_cols=("proto-number", "stime"),
     ),
     "GenS10": DatasetConfig(
         tag="GenS10",
         path="TonIoT-30ShapFets.csv",
         label_col="label",
         label_map="binary_normal",
-        drop_cols=(),
+        # 'ltime' (absolute last time) is a TEMPORAL LEAK: AUC 1.0 vs label. Dropped.
+        # 'dur' (duration) is a legit relative feature and is kept.
+        drop_cols=("ltime",),
     ),
 }

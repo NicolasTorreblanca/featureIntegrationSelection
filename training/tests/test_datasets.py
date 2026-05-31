@@ -27,3 +27,10 @@ def test_og_and_gen_use_category_no_map():
     assert DATASETS["Gen10"].label_col == "category"
     assert DATASETS["Gen10"].label_map is None
     assert "proto-number" in DATASETS["Gen10"].drop_cols
+
+
+def test_temporal_leak_columns_dropped():
+    # stime/ltime are absolute timestamps that perfectly proxy the label
+    # (single-feature AUC 1.0). They MUST be dropped or models "learn the clock".
+    assert "stime" in DATASETS["Gen10"].drop_cols
+    assert "ltime" in DATASETS["GenS10"].drop_cols
