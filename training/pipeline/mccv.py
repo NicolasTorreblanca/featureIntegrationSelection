@@ -96,7 +96,11 @@ def run_mccv_unsupervised(
     seed: int,
     n_subsample: int,
 ) -> List[dict]:
-    """Unsupervised MCCV: each iteration resamples benign train to n_subsample (seeded)."""
+    """Unsupervised MCCV: each iteration resamples benign train to n_subsample (seeded).
+
+    NOTE: `constructors` values must be ZERO-ARG callables (e.g. `lambda: Model(...)`),
+    unlike run_mccv which also accepts seed-taking constructors. They are called as ctor().
+    """
     rows = []
     for i in range(K):
         s = seed + i
