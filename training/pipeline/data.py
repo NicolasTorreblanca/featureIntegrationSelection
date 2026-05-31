@@ -83,6 +83,29 @@ def select_mi_top_k(
     return selected, scores
 
 
+def select_mi_top_k_on(
+    df: pd.DataFrame,
+    train_idx: "np.ndarray",
+    k: int,
+    seed: int,
+) -> tuple[list[str], list[float]]:
+    """MI top-K selection fit ONLY on the rows in train_idx (leakage-free).
+
+    Returns (feature_names, mi_scores). The same names are later applied to
+    both train and test columns by the caller.
+    """
+    feature_cols = _numeric_feature_columns(df)
+    train = df.iloc[train_idx]
+    X = train[feature_cols].values
+    y = train[TARGET_COLUMN].values
+    X_scaled = StandardScaler().fit_transform(X)
+    scores = mutual_info_classif(X_scaled, y, random_state=seed)
+    order = np.argsort(scores)[::-1][:k]
+    selected = [feature_cols[i] for i in order]
+    sel_scores = [float(scores[i]) for i in order]
+    return selected, sel_scores
+
+
 def normalize_frame(df: pd.DataFrame, cfg: DatasetConfig) -> pd.DataFrame:
     """Produce a uniform binary `category` target + drop leak/aux columns.
 
