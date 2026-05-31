@@ -25,16 +25,31 @@ def test_selects_k_features_and_ranks_informative_first():
     assert TARGET_COLUMN not in feats
 
 
-def test_only_train_rows_influence_selection():
-    df = _frame()
-    # Corrupt the TEST half's labels; selection must be unaffected (train-only fit)
+def test_train_only_selection_differs_from_full_frame():
+    """Genuine leakage guard: train-only and full-frame fits must pick different
+    winners. f_trainonly is near-perfect in train but anti-correlated in test
+    (so its MI collapses over the full frame); g is mildly informative everywhere.
+    If select_mi_top_k_on ignored train_idx, both calls would return the same
+    list and this test would fail."""
+    rng = np.random.default_rng(3)
+    n = 1000
+    y = rng.integers(0, 2, size=n)
     train_idx = np.arange(0, 500)
-    test_idx = np.arange(500, 1000)
-    df_corrupt = df.copy()
-    df_corrupt.loc[test_idx, TARGET_COLUMN] = 0  # destroy test signal
-    feats_a, _ = select_mi_top_k_on(df, train_idx=train_idx, k=2, seed=42)
-    feats_b, _ = select_mi_top_k_on(df_corrupt, train_idx=train_idx, k=2, seed=42)
-    assert feats_a == feats_b           # test labels never consulted
+    all_idx = np.arange(0, n)
+
+    f = y.astype(float).copy()
+    f[500:] = 1.0 - y[500:]                  # anti-correlated in the test half
+    f = f + rng.normal(0, 0.01, size=n)      # near-perfect in train; ~0 MI over full frame
+    g = y + rng.normal(0, 1.0, size=n)       # mildly informative everywhere
+
+    df = pd.DataFrame({"f_trainonly": f, "g": g, TARGET_COLUMN: y})
+
+    train_feats, _ = select_mi_top_k_on(df, train_idx=train_idx, k=1, seed=0)
+    full_feats, _ = select_mi_top_k_on(df, train_idx=all_idx, k=1, seed=0)
+
+    assert train_feats == ["f_trainonly"]    # train-only sees the train-perfect feature
+    assert full_feats == ["g"]               # full-frame: f's MI collapses, g wins
+    assert train_feats != full_feats         # => function genuinely respects train_idx
 
 
 def test_deterministic_under_same_seed():
