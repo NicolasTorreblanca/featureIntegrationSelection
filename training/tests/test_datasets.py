@@ -23,5 +23,7 @@ def test_og_and_gen_use_category_no_map():
     assert DATASETS["OG10"].label_col == "category"
     assert DATASETS["OG10"].label_map is None
     assert "type" in DATASETS["OG10"].drop_cols
+    assert "label" in DATASETS["OG10"].drop_cols
     assert DATASETS["Gen10"].label_col == "category"
+    assert DATASETS["Gen10"].label_map is None
     assert "proto-number" in DATASETS["Gen10"].drop_cols
