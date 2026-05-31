@@ -74,14 +74,21 @@ def run_experiment(cfg, out_dir, k, seed, n_trials, n_subsample, K):
     out_dir.mkdir(parents=True, exist_ok=True)
     studies_dir.mkdir(parents=True, exist_ok=True)
 
+    t_start = time.time()
+    phase = {}
+
     # 1. Load + normalize schema
+    print(f"[{cfg.tag}] loading {cfg.path} ...", flush=True)
+    _t = time.time()
     df = data_module.load_normalized(cfg)
+    phase["load"] = time.time() - _t
 
     # 2. Supervised split first (so MI is fit on train rows only)
+    # 3. Leakage-free MI top-k on the supervised training rows
+    print(f"[{cfg.tag}] MI top-{k} selection (leakage-free) ...", flush=True)
+    _t = time.time()
     sup = splits_module.supervised_split(df, seed=seed)
     train_idx = sup.X_train.index.to_numpy()
-
-    # 3. Leakage-free MI top-k on the supervised training rows
     feats, scores = data_module.select_mi_top_k_on(df, train_idx=train_idx, k=k, seed=seed)
     with (out_dir / "selected_features.json").open("w", encoding="utf-8") as f:
         json.dump({"dataset": cfg.tag, "selected_features": feats,
@@ -91,22 +98,41 @@ def run_experiment(cfg, out_dir, k, seed, n_trials, n_subsample, K):
     df_red = df[feats + [data_module.TARGET_COLUMN]].copy()
     sup = splits_module.supervised_split(df_red, seed=seed)
     unsup = splits_module.unsupervised_split(df_red, seed=seed)
+    phase["split_mi"] = time.time() - _t
 
     # 5. Tune (sequential, seeded). n_subsample caps unsupervised tuning data.
+    print(f"[{cfg.tag}] tuning supervised ({n_trials} trials/model) ...", flush=True)
+    _t = time.time()
     sup_tune = tune_module.tune_supervised(sup.X_train, sup.y_train, n_trials=n_trials,
                                            seed=seed, studies_dir=studies_dir)
+    phase["tune_supervised"] = time.time() - _t
+
+    print(f"[{cfg.tag}] tuning unsupervised ({n_trials} trials/model, sub={n_subsample}) ...", flush=True)
+    _t = time.time()
     unsup_tune = tune_module.tune_unsupervised(unsup.benign_train, unsup.X_valid, unsup.y_valid,
                                                n_trials=n_trials, seed=seed,
                                                studies_dir=studies_dir, tune_subsample=n_subsample)
+    phase["tune_unsupervised"] = time.time() - _t
+
     sup_ctors = eval_module.supervised_constructors(sup_tune, seed=seed)
     unsup_ctors = eval_module.unsupervised_constructors(unsup_tune, seed=seed)
 
     # 6. MCCV evaluation. Pass the zero-arg constructors DIRECTLY (no wrapping!).
+    print(f"[{cfg.tag}] MCCV supervised (K={K}) ...", flush=True)
+    _t = time.time()
     sup_rows = mccv_module.run_mccv(sup.X_full, sup.y_full, models=list(sup_ctors),
                                     K=K, seed=seed, constructors=sup_ctors)
+    phase["mccv_supervised"] = time.time() - _t
+
+    print(f"[{cfg.tag}] MCCV unsupervised (K={K}) ...", flush=True)
+    _t = time.time()
     unsup_rows = mccv_module.run_mccv_unsupervised(unsup.benign_train, unsup.X_test, unsup.y_test,
                                                    constructors=unsup_ctors, K=K, seed=seed,
                                                    n_subsample=n_subsample)
+    phase["mccv_unsupervised"] = time.time() - _t
+
+    print(f"[{cfg.tag}] writing results ...", flush=True)
+    _t = time.time()
     pd.DataFrame(sup_rows).to_csv(out_dir / f"{cfg.tag}_supervised_mccv.csv", index=False)
     pd.DataFrame(unsup_rows).to_csv(out_dir / f"{cfg.tag}_unsupervised_mccv.csv", index=False)
 
@@ -114,12 +140,17 @@ def run_experiment(cfg, out_dir, k, seed, n_trials, n_subsample, K):
     unsup_agg = mccv_module.aggregate(unsup_rows)
     report_module.per_dataset_table({**sup_agg, **unsup_agg}).to_csv(
         out_dir / f"{cfg.tag}_summary.csv", index=False)
+    phase["write"] = time.time() - _t
 
     meta = {"dataset": cfg.tag, "seed": seed, "k": k, "n_trials": n_trials,
             "n_subsample": n_subsample, "K": K, "features_used": len(feats),
-            "selected_features": feats}
+            "selected_features": feats,
+            "phase_seconds": phase,
+            "total_seconds": time.time() - t_start}
     with (out_dir / "run_metadata.json").open("w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
+
+    print(f"[{cfg.tag}] done in {time.time() - t_start:.1f}s  ->  {out_dir}", flush=True)
     return meta
 
 

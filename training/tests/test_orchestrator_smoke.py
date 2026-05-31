@@ -31,3 +31,7 @@ def test_run_experiment_smoke(tmp_path):
     assert (out_dir / "run_metadata.json").exists()
     assert (out_dir / "TINY_summary.csv").exists()
     assert meta["features_used"] == 2
+
+    meta_on_disk = json.loads((out_dir / "run_metadata.json").read_text())
+    assert "phase_seconds" in meta_on_disk and "total_seconds" in meta_on_disk
+    assert meta_on_disk["phase_seconds"]  # non-empty
