@@ -2,3 +2,10 @@
 /NFStream/DATASETS/
 /NFStream/Ton-IoT-MultiFet/
 /NFStream/Ton-IoT-Processed/
+
+# Experiment datasets (large; track paths in config, not the files)
+/Ton-IoT-OGFets.csv
+/TonIoT-ManualFets.csv
+/TonIoT-30ShapFets.csv
+/training/results/
+__pycache__/
