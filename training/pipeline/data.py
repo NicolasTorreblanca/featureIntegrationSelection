@@ -11,6 +11,7 @@ Mirrors notebook cells 4, 6, 8, 10:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional
 
 import numpy as np
@@ -22,6 +23,11 @@ from .datasets import DatasetConfig
 
 LABEL_LEAK_COLUMNS = ("label", "proto-number")
 TARGET_COLUMN = "category"
+
+# Repo root = featureIntegrationSelection/ (this file is training/pipeline/data.py).
+# Dataset paths in the registry are relative to it, so we resolve them here and
+# the pipeline works regardless of the current working directory.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 @dataclass
@@ -136,8 +142,15 @@ def load_normalized(cfg: DatasetConfig) -> pd.DataFrame:
     Resets to a clean 0..n-1 RangeIndex so that train-row positions captured
     via `X_train.index` are valid for positional `iloc` in leakage-free MI
     selection (avoids silent wrong-row selection on non-default indices).
+
+    Relative cfg.path values are resolved against the repo root, so the pipeline
+    runs from any working directory (e.g. training/). Absolute paths (test
+    fixtures) are used as-is.
     """
-    df = pd.read_csv(cfg.path)
+    path = Path(cfg.path)
+    if not path.is_absolute():
+        path = _REPO_ROOT / path
+    df = pd.read_csv(path)
     df = normalize_frame(df, cfg)
     return df.reset_index(drop=True)
 
