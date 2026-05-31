@@ -29,4 +29,5 @@ def test_run_experiment_smoke(tmp_path):
     assert (out_dir / "TINY_supervised_mccv.csv").exists()
     assert (out_dir / "TINY_unsupervised_mccv.csv").exists()
     assert (out_dir / "run_metadata.json").exists()
+    assert (out_dir / "TINY_summary.csv").exists()
     assert meta["features_used"] == 2

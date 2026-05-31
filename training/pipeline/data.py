@@ -131,9 +131,15 @@ def normalize_frame(df: pd.DataFrame, cfg: DatasetConfig) -> pd.DataFrame:
 
 
 def load_normalized(cfg: DatasetConfig) -> pd.DataFrame:
-    """Load a dataset CSV from disk and normalize its schema."""
+    """Load a dataset CSV from disk and normalize its schema.
+
+    Resets to a clean 0..n-1 RangeIndex so that train-row positions captured
+    via `X_train.index` are valid for positional `iloc` in leakage-free MI
+    selection (avoids silent wrong-row selection on non-default indices).
+    """
     df = pd.read_csv(cfg.path)
-    return normalize_frame(df, cfg)
+    df = normalize_frame(df, cfg)
+    return df.reset_index(drop=True)
 
 
 def prepare(
