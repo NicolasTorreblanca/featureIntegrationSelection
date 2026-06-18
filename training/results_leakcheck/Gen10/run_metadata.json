@@ -1,0 +1,31 @@
+{
+  "dataset": "Gen10",
+  "seed": 42,
+  "k": 10,
+  "n_trials": 3,
+  "n_subsample": 10000,
+  "K": 2,
+  "features_used": 10,
+  "selected_features": [
+    "HH-L3-weight",
+    "stddev",
+    "HH-L0.01-weight",
+    "HpHp-L0.01-magnitude",
+    "HpHp-L0.01-mean",
+    "mean",
+    "max",
+    "src-bytes",
+    "dst-port",
+    "dst-ip-bytes"
+  ],
+  "phase_seconds": {
+    "load": 2.1238632202148438,
+    "split_mi": 43.46858477592468,
+    "tune_supervised": 366.9579985141754,
+    "tune_unsupervised": 42.81400179862976,
+    "mccv_supervised": 32.545111656188965,
+    "mccv_unsupervised": 50.745930671691895,
+    "write": 0.019038915634155273
+  },
+  "total_seconds": 538.6745295524597
+}

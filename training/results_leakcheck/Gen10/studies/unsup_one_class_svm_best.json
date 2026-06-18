@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "nu": 0.41789689399220664,
+    "gamma": "auto",
+    "kernel": "rbf"
+  },
+  "best_value": 0.5316527506496757,
+  "best_trial_number": 2,
+  "n_trials": 3,
+  "elapsed_seconds": 27.481194257736206,
+  "seed": 42
+}

@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "max_depth": 14,
+    "min_samples_split": 10,
+    "criterion": "gini"
+  },
+  "best_value": 0.9728949762321294,
+  "best_trial_number": 0,
+  "n_trials": 3,
+  "elapsed_seconds": 29.212610721588135,
+  "seed": 42
+}

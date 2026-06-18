@@ -1,0 +1,13 @@
+{
+  "best_params": {
+    "n_neighbors": 22,
+    "leaf_size": 116,
+    "contamination": 0.14907884894416698,
+    "algorithm": "auto"
+  },
+  "best_value": 0.8296295420876243,
+  "best_trial_number": 0,
+  "n_trials": 3,
+  "elapsed_seconds": 8.615057945251465,
+  "seed": 42
+}

@@ -1,0 +1,28 @@
+{
+  "dataset": "Gen10",
+  "selected_features": [
+    "HH-L3-weight",
+    "stddev",
+    "HH-L0.01-weight",
+    "HpHp-L0.01-magnitude",
+    "HpHp-L0.01-mean",
+    "mean",
+    "max",
+    "src-bytes",
+    "dst-port",
+    "dst-ip-bytes"
+  ],
+  "mi_scores": {
+    "HH-L3-weight": 0.5539618419203061,
+    "stddev": 0.5504292166963756,
+    "HH-L0.01-weight": 0.5500881404119569,
+    "HpHp-L0.01-magnitude": 0.49619496530494533,
+    "HpHp-L0.01-mean": 0.4961754287046989,
+    "mean": 0.49591698724519984,
+    "max": 0.48448843999532776,
+    "src-bytes": 0.45074526412818194,
+    "dst-port": 0.3877094023973531,
+    "dst-ip-bytes": 0.3771175550045174
+  },
+  "seed": 42
+}

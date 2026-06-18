@@ -1,0 +1,13 @@
+{
+  "best_params": {
+    "n_estimators": 281,
+    "max_samples": 0.9556428757689246,
+    "contamination": 0.3686770314875885,
+    "max_features": 0.6387926357773329
+  },
+  "best_value": 0.7668319534073617,
+  "best_trial_number": 0,
+  "n_trials": 3,
+  "elapsed_seconds": 5.352282524108887,
+  "seed": 42
+}

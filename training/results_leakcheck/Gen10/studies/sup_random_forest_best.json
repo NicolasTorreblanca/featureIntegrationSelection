@@ -1,0 +1,12 @@
+{
+  "best_params": {
+    "n_estimators": 175,
+    "max_depth": 29,
+    "max_features": "sqrt"
+  },
+  "best_value": 0.9831083164908827,
+  "best_trial_number": 0,
+  "n_trials": 3,
+  "elapsed_seconds": 337.72856283187866,
+  "seed": 42
+}
